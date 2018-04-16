@@ -86,6 +86,7 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
     for i in range(len(array_tuples)):
         # print(array_tuples[i][0][0])
         dict_fds[array_tuples[i]] = {}
+        # print(array_tuples[i])
     
     for i in dict_fds:
         attr = list(i[0])
@@ -137,7 +138,12 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
     #     print(str(i) + ' => ' + str(result_dict[i]))
 
     print('--------------------------------------')
+
+    #print(result_dict)
     FDs = []
+
+    # for i in result_dict:
+    #     print(str(i) + ' => ' + str(result_dict[i]))
 
     for i in result_dict:
         if result_dict[i] >= minimum_support:
