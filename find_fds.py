@@ -7,16 +7,19 @@ This script aims to discover approximate functional dependencies in a given
 data set.
 """
 import sys
+import time
 
-def pprint(FDs):
-    """Pretty print of discovered FDs
+def pprint(list_keys_fds):
     """
-    print('\nDiscovered FDs:')
-    for fd in FDs:
+    Pretty print of discovered list_keys_fds
+    """
+    print('\nDiscovered list_keys_fds:')
+    for fd in list_keys_fds:
         print(', '.join(fd[0]), " -> ", fd[1], ' with support ', fd[2])
 
 def load_data(data_file_name):
-    """Read data from data_file_name and return a list of lists, 
+    """
+    Read data from data_file_name and return a list of lists, 
     where the first list (in the larger list) is the list of attribute names, 
     and the remaining lists correspond to the tuples (rows) in the file.
     """
@@ -28,138 +31,131 @@ def load_data(data_file_name):
     return results
 
 def find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support):
-    """Main function which you need to implement!
+    """
+    Main function which you need to implement!
     
     The function discovers approximate functional dependencies in a given data
     
     Input:
-        data_file_name - name of a CSV file with data 
-        depth_limit - integer that limits the depth of search through the space of 
+        data_file_name  - name of a CSV file with data 
+        depth_limit     - integer that limits the depth of search through the space of 
             domains of functional dependencies
-        minimum_support - threshold for identifying adequately approximate FDs
+        minimum_support - threshold for identifying adequately approximate list_keys_fds
         
     Output:
-        FDs - a list of tuples. Each tuple represents a discovered FD.
+        list_keys_fds - a list of tuples. Each tuple represents a discovered FD.
         The first element of each tuple is a list containing LHS of discovered FD
         The second element of the tuple is a single attribute name, which is RHS of that FD
         The third element of the tuple is support for that FD
     
     Output example:
         [([A],C, 0.91), ([C, F],E, 0.97), ([A,B,C],D, 0.98), ([A, G, H],F, 0.92)]
-        The above list represent the following FDs:
+        The above list represent the following list_keys_fds:
             A -> C, with support 0.91
             C, F -> E, with support 0.97 
             A, B, C -> D, with support 0.98
             A, G, H -> F, with support 0.92                   
     """
-    #read input data:
+    # Read input data:
     input_data = load_data(data_file_name)
     
-    #Transform input_data (list of lists) into some better representation.
-    #You need to decide what that representation should be.
-    #Data transformation is optional!
+    # Transform input_data (list of lists) into some better representation.
+    # You need to decide what that representation should be.
+    # Data transformation is optional!
 
     #--------Your code here! Optional! ----------#
     
-    #Discover FDs with given minimum support and depth limit:
+    # Get first row (headers)
     first_row = input_data[0]
-    total = len(input_data) - 1
-    # print(total)
-    first_row[-1] = first_row[-1].strip()
-    dic = {k: v for v, k in enumerate(first_row)}
-    #for i in dic:
-        # print(str(i) + ' ' + str(dic[i]))
-    first_row_set = set(first_row)
-    output = [None] * depth_limit
-    target = []
-    output = []
-    fds = cb(target, first_row, output, depth_limit)
-    array_tuples = []
-    for i in range(len(fds)):
-        # print(fds[i])
-        remaining = list(first_row_set - set(fds[i]))
-        for x in range(len(remaining)):
-            array_tuples.append((tuple(fds[i]), remaining[x]))
-        # print(list(first_row_set - set(fds[i])))
 
-    dict_fds = {}
-    for i in range(len(array_tuples)):
-        # print(array_tuples[i][0][0])
-        dict_fds[array_tuples[i]] = {}
-        # print(array_tuples[i])
+    # Find total rows
+    total_rows = len(input_data) - 1
     
-    for i in dict_fds:
-        attr = list(i[0])
-        # attr.append(i[1])
-        for x in input_data[1:]: # Go through each column in spreadsheet
-            tmp = []
-            for z in attr: # Find keys
-                tmp.append(x[dic[z]].strip())
+    # Remove \n on the last column header
+    first_row[-1] = first_row[-1].strip()
 
-            val = x[dic[i[1]]].strip()
+    # Create a dictionary of 
+    # key = header column and 
+    # value = index of column
+    dic_header_to_index = {k: v for v, k in enumerate(first_row)}
 
-            tmp_tuple = tuple(tmp)
-            # dict_fds[]
-            # print(tmp_tuple)
+    # Create a set that contains the header elements
+    first_row_set = set(first_row)
 
-            if tmp_tuple in dict_fds[i]:
-                if val in dict_fds[i][tmp_tuple]:
-                    dict_fds[i][tmp_tuple][val] = dict_fds[i][tmp_tuple][val] + 1
-                else:
-                    dict_fds[i][tmp_tuple][val] = 1
-            else:
-                dict_fds[i][tmp_tuple] = {}
-                dict_fds[i][tmp_tuple][val] = 1
+    # Get a list of all possible keys of FDs
+    list_keys_fds = find_all_keys(first_row, depth_limit)
 
-    result_dict = {}
+    # Create a dictionary of FDs
+    dic_fds = {}
 
-    for i in dict_fds:
-        # print('key: ' + str(i))
-        # print('value: ' + str(dict_fds[i]))
-        sum = 0
-        for x in dict_fds[i]:
-            # print('value inside value: ' + str(dict_fds[i][x]))
-            maxi = max(dict_fds[i][x], key=dict_fds[i][x].get)
-            sum = sum + dict_fds[i][x][maxi]
-            # print('\tmax: ' + str(dict_fds[i][x][maxi]) + ' ' + str(maxi))
-        
-        prob = sum / total
-        # print('max: ' + str(max(dict_fds[i], key=dict_fds[i].get)))
-        # print('Prob: ' + str(prob))
+    # Loop through the list of FD keys
+    for i in range(len(list_keys_fds)):
+        # Find remaining attributes that are not a part of the FD
+        remaining = list(first_row_set - set(list_keys_fds[i]))
 
-        result_dict[i] = prob
-        # print('------')
-        # print('key' + str(i))
-        # print(str(attr) + ' ' + str(dict_fds[i]))
-    # print('\n')
-    # print(dict_fds[(('A',), 'B')])
+        # Loop through the remaining attributes
+        for x in range(len(remaining)):
+            # Register the key into the dictionary
+            dic_fds[(tuple(list_keys_fds[i]), remaining[x])] = {}
 
-    # for i in result_dict:
-    #     print(str(i) + ' => ' + str(result_dict[i]))
-
-    print('--------------------------------------')
-
-    #print(result_dict)
+    # A list container to store all the FDs up to depth_limit and satisfy minimum_support
     FDs = []
 
-    # for i in result_dict:
-    #     print(str(i) + ' => ' + str(result_dict[i]))
+    # Loop through the keys in the dictionary
+    for i in dic_fds:
+        attr = list(i[0])
 
-    for i in result_dict:
-        if result_dict[i] >= minimum_support:
-            # print(str(i) + ' => ' + str(result_dict[i]))
-            # print('\tFD: ' + str(list(i[0])))
-            # print('\tval: ' + i[1])
-            entry = (list(i[0]), i[1], result_dict[i])
-            FDs.append(entry)
+        # Go through each column in spreadsheet except the first row
+        for x in input_data[1:]:
+            tmp = []
+            for z in attr: # Find keys
+                tmp.append(x[dic_header_to_index[z]].strip())
+
+            val = x[dic_header_to_index[i[1]]].strip()
+
+            tmp_tuple = tuple(tmp)
+
+            if tmp_tuple in dic_fds[i]:
+                if val in dic_fds[i][tmp_tuple]:
+                    dic_fds[i][tmp_tuple][val] = dic_fds[i][tmp_tuple][val] + 1
+                else:
+                    dic_fds[i][tmp_tuple][val] = 1
+            else:
+                dic_fds[i][tmp_tuple] = {}
+                dic_fds[i][tmp_tuple][val] = 1
+        
+        # Calculate the sum
+        sum = 0
+        for x in dic_fds[i]:
+            # Find the maximum key
+            maxi = max(dic_fds[i][x], key=dic_fds[i][x].get)
+            sum = sum + dic_fds[i][x][maxi]
+        
+        # Calculate the probability
+        prob = sum / total_rows
+
+        # Add probability to corresponding key if greater or equal to minimum support
+        if prob >= minimum_support:
+            FDs.append((list(i[0]), i[1], prob))
     
     #--------Your code here!---------------------#
     
     return FDs
 
-def cb(target, data, output, depth):
+def find_all_keys(data, depth, target=[], output=[]):
     """
-    Finding all possible keys of FDs
+    Finding all possible keys of list_keys_fds via recursion
+    (Combination problem)
+
+    Input:
+        data    - a list containing the first row elements
+        depth   - integer that limits the depth of search through the space of 
+                  domains of functional dependencies
+        target  - threshold for identifying adequately approximate list_keys_fds
+        output  - a list container that holds all the possible FD keys
+
+    Output:
+        output/list_keys_fds - a list of all FD keys.
     """
     for i in range(len(data)):
         new_target = target[:]
@@ -167,25 +163,50 @@ def cb(target, data, output, depth):
         new_target.append(data[i])
         new_data = data[i+1:]
         
+        # Only consider keys up to length of depth
         if len(new_target) <= depth:
-        #print(new_target)
             output.append(new_target)
-            cb(new_target, new_data, output, depth)
+            find_all_keys(new_data, depth, new_target, output)
     return output
 
+def avg_runtime(data_file_name, depth_limit, minimum_support):
+    sum = 0
+    for _ in range(20):
+        # Start time
+        start_time = time.time()
+
+        FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
+
+        # Stop timer
+        stop_time = time.time()
+
+        sum = sum + stop_time - start_time
+
+    return sum / 20
+
 if __name__ == '__main__':
-    #parse command line arguments:
+    # Parse command line arguments:
     if (len(sys.argv) < 3):
         print('Wrong number of arguments. Correct example:')
-        print('python find_fds.py IndividualProjectTestSet1.csv 3 0.91')
+        print('python find_list_keys_fds.py IndividualProjectTestSet1.csv 3 0.91')
     else:
         data_file_name = str(sys.argv[1])
         depth_limit = int(sys.argv[2])
         minimum_support = float(sys.argv[3])
 
-        #Main function which you need to implement. 
-        #It discover FDs in the input data with given minimum support and depth limit
-        FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
+        # Main function which you need to implement. 
+        # It discover list_keys_fds in the input data with given minimum support and depth limit
         
-        #print you findings:
+        # Start timer
+        # start_time = time.time()
+
+        FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
+
+        # Stop timer
+        # stop_time = time.time()
+        
+        # Print you  findings:
         pprint(FDs)
+
+        runtime = avg_runtime(data_file_name, depth_limit, minimum_support)
+        print('\nRuntime: %s seconds' % str(runtime))
