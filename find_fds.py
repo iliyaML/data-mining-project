@@ -7,6 +7,8 @@ This script aims to discover approximate functional dependencies in a given
 data set.
 """
 import sys
+
+# Imported time library to perform runtime analysis
 import time
 
 def pprint(list_keys_fds):
@@ -133,6 +135,7 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
         prob = sum / total_rows
 
         # Add probability to corresponding key if greater or equal to minimum support
+        # and to FDs list
         if prob >= minimum_support:
             FDs.append((list(i[0]), i[1], prob))
     
@@ -179,7 +182,11 @@ def avg_runtime(data_file_name, depth_limit, minimum_support, trial=1):
     Output:
         runtime - a float that represents the average runtime
     """
+
+    # Calculate sum
     sum = 0
+
+    # Loop through number of trial
     for i in range(trial):
         # Start timer
         start_time = time.time()
@@ -222,6 +229,8 @@ if __name__ == '__main__':
 
         # Main function which you need to implement. 
         # It discover list_keys_fds in the input data with given minimum support and depth limit
+
+        print('Program starting...\n')
 
         # Calculate average runtime and print FDs
         runtime = avg_runtime(data_file_name, depth_limit, minimum_support, trial)
