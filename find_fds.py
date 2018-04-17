@@ -171,7 +171,7 @@ def find_all_keys(data, depth, target=[], output=[]):
 
 def avg_runtime(data_file_name, depth_limit, minimum_support):
     sum = 0
-    for _ in range(20):
+    for _ in range(1):
         # Start time
         start_time = time.time()
 
@@ -182,7 +182,7 @@ def avg_runtime(data_file_name, depth_limit, minimum_support):
 
         sum = sum + stop_time - start_time
 
-    return sum / 20
+    return sum / 1
 
 if __name__ == '__main__':
     # Parse command line arguments:
