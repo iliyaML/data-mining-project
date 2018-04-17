@@ -62,8 +62,6 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
     # Transform input_data (list of lists) into some better representation.
     # You need to decide what that representation should be.
     # Data transformation is optional!
-
-    #--------Your code here! Optional! ----------#
     
     # Get first row (headers)
     first_row = input_data[0]
@@ -138,8 +136,6 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
         if prob >= minimum_support:
             FDs.append((list(i[0]), i[1], prob))
     
-    #--------Your code here!---------------------#
-    
     return FDs
 
 def find_all_keys(data, depth, target=[], output=[]):
@@ -169,44 +165,64 @@ def find_all_keys(data, depth, target=[], output=[]):
             find_all_keys(new_data, depth, new_target, output)
     return output
 
-def avg_runtime(data_file_name, depth_limit, minimum_support):
+def avg_runtime(data_file_name, depth_limit, minimum_support, trial=1):
+    """
+    Calculates the average runtime of calculating the FDs
+
+    Input:
+        data_file_name  - name of a CSV file with data 
+        depth_limit     - integer that limits the depth of search through the space of 
+            domains of functional dependencies
+        minimum_support - threshold for identifying adequately approximate list_keys_fds
+        trial - an integer representing the number of runs to calculate FDs
+
+    Output:
+        runtime - a float that represents the average runtime
+    """
     sum = 0
-    for _ in range(1):
-        # Start time
+    for i in range(trial):
+        # Start timer
         start_time = time.time()
 
+        # Find FDs
         FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
+
+        # Only print the first trial (i = 0)
+        if i == 0:
+            pprint(FDs)
+            print()
 
         # Stop timer
         stop_time = time.time()
 
-        sum = sum + stop_time - start_time
+        # Calculate runtime
+        runtime = stop_time - start_time
 
-    return sum / 1
+        # Print runtime result
+        print('Runtime (%s): %s seconds' % (str(i + 1), str(runtime)))
+
+        # Calculate runtime and sum them
+        sum = sum + runtime
+
+    # Return average
+    return sum / trial
 
 if __name__ == '__main__':
     # Parse command line arguments:
     if (len(sys.argv) < 3):
         print('Wrong number of arguments. Correct example:')
-        print('python find_list_keys_fds.py IndividualProjectTestSet1.csv 3 0.91')
+        print('python find_fds.py rssi.csv 3 0.91')
     else:
         data_file_name = str(sys.argv[1])
         depth_limit = int(sys.argv[2])
         minimum_support = float(sys.argv[3])
 
+        # Accepts an optional 4th argument which is the number of trials to calculate FDs
+        trial = int(sys.argv[4]) if 4 < len(sys.argv) else 1
+
         # Main function which you need to implement. 
         # It discover list_keys_fds in the input data with given minimum support and depth limit
-        
-        # Start timer
-        # start_time = time.time()
 
-        FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
-
-        # Stop timer
-        # stop_time = time.time()
-        
-        # Print you  findings:
-        pprint(FDs)
-
-        runtime = avg_runtime(data_file_name, depth_limit, minimum_support)
-        print('\nRuntime: %s seconds' % str(runtime))
+        # Calculate average runtime and print FDs
+        runtime = avg_runtime(data_file_name, depth_limit, minimum_support, trial)
+        print('\nAverage Runtime: %s seconds (Average of %s trials)' % (str(runtime), str(trial)))
