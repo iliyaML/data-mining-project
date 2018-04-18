@@ -25,11 +25,8 @@ def load_data(data_file_name):
     where the first list (in the larger list) is the list of attribute names, 
     and the remaining lists correspond to the tuples (rows) in the file.
     """
-    with open(data_file_name, 'r') as f:
-        results = []
-        for line in f:
-                words = line.split(',')
-                results.append(words[:])
+    with open(data_file_name, 'rU') as f:
+        results = [[x.rstrip() for x in line.split(',')] for line in f]
     return results
 
 def find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support):
@@ -70,9 +67,6 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
 
     # Find total rows
     total_rows = len(input_data) - 1
-    
-    # Remove \n on the last column header
-    first_row[-1] = first_row[-1].strip()
 
     # Create a dictionary of 
     # key = header column and 
@@ -87,6 +81,9 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
 
     # Create a dictionary of FDs
     dic_fds = {}
+
+    for i in dic_header_to_index:
+        dic_fds[((), i)] = {}
 
     # Loop through the list of FD keys
     for i in range(len(list_keys_fds)):
@@ -103,24 +100,30 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
 
     # Loop through the keys in the dictionary
     for i in dic_fds:
+        # Get list of keys of in a FD
         attr = list(i[0])
 
         # Go through each column in spreadsheet except the first row
         for x in input_data[1:]:
-            tmp = []
-            for z in attr: # Find keys
-                tmp.append(x[dic_header_to_index[z]].strip())
+            tmp = [x[dic_header_to_index[z]] for z in attr]
+            # for z in attr: # Find keys
+            #     tmp.append(x[dic_header_to_index[z]])
 
-            val = x[dic_header_to_index[i[1]]].strip()
+            val = x[dic_header_to_index[i[1]]]
 
+            # Convert tmp into a tuple to be used as a key for a dictionary
             tmp_tuple = tuple(tmp)
 
             if tmp_tuple in dic_fds[i]:
+                # If tmp_tuple exists as key
                 if val in dic_fds[i][tmp_tuple]:
+                    # If val exists as key, increment it
                     dic_fds[i][tmp_tuple][val] = dic_fds[i][tmp_tuple][val] + 1
                 else:
+                    # Register val as key
                     dic_fds[i][tmp_tuple][val] = 1
             else:
+                # Register tmp_tuple as key and set value to 1
                 dic_fds[i][tmp_tuple] = {}
                 dic_fds[i][tmp_tuple][val] = 1
         
@@ -137,7 +140,8 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
         # Add probability to corresponding key if greater or equal to minimum support
         # and to FDs list
         if prob >= minimum_support:
-            FDs.append((list(i[0]), i[1], prob))
+            keys = ['{}'] if len(i[0]) == 0 else list(i[0])
+            FDs.append((keys, i[1], prob))
     
     return FDs
 
@@ -157,9 +161,8 @@ def find_all_keys(data, depth, target=[], output=[]):
         output/list_keys_fds - a list of all FD keys.
     """
     for i in range(len(data)):
-        new_target = target[:]
-        new_data = data[:]
-        new_target.append(data[i])
+        new_target = target[:]      # Get copy of target
+        new_target.append(data[i])  # Append key
         new_data = data[i+1:]
         
         # Only consider keys up to length of depth
@@ -230,7 +233,7 @@ if __name__ == '__main__':
         # Main function which you need to implement. 
         # It discover list_keys_fds in the input data with given minimum support and depth limit
 
-        print('Program starting...\n')
+        print('Program starting...')
 
         # Calculate average runtime and print FDs
         runtime = avg_runtime(data_file_name, depth_limit, minimum_support, trial)
