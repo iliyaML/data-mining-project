@@ -8,12 +8,15 @@ data set.
 """
 import sys
 
-def pprint(FDs):
+# Imported time library to perform runtime analysis
+import time
+
+def pprint(list_keys_fds):
     """
     Pretty print of discovered list_keys_fds
     """
-    print('\nDiscovered FDs:')
-    for fd in FDs:
+    print('\nDiscovered list_keys_fds:')
+    for fd in list_keys_fds:
         print(', '.join(fd[0]), " -> ", fd[1], ' with support ', fd[2])
 
 def load_data(data_file_name):
@@ -102,10 +105,10 @@ def find_approximate_functional_dependencies(data_file_name, depth_limit, minimu
 
         # Go through each column in spreadsheet except the first row
         for x in input_data[1:]:
-            # Find keys
             tmp = [x[dic_header_to_index[z]] for z in attr]
+            # for z in attr: # Find keys
+            #     tmp.append(x[dic_header_to_index[z]])
 
-            # Find value of key(s)
             val = x[dic_header_to_index[i[1]]]
 
             # Convert tmp into a tuple to be used as a key for a dictionary
@@ -157,7 +160,6 @@ def find_all_keys(data, depth, target=[], output=[]):
     Output:
         output/list_keys_fds - a list of all FD keys.
     """
-    # Loop through all the header columns
     for i in range(len(data)):
         new_target = target[:]      # Get copy of target
         new_target.append(data[i])  # Append key
@@ -169,19 +171,70 @@ def find_all_keys(data, depth, target=[], output=[]):
             find_all_keys(new_data, depth, new_target, output)
     return output
 
+def avg_runtime(data_file_name, depth_limit, minimum_support, trial=1):
+    """
+    Calculates the average runtime of calculating the FDs
+
+    Input:
+        data_file_name  - name of a CSV file with data 
+        depth_limit     - integer that limits the depth of search through the space of 
+            domains of functional dependencies
+        minimum_support - threshold for identifying adequately approximate list_keys_fds
+        trial - an integer representing the number of runs to calculate FDs
+
+    Output:
+        runtime - a float that represents the average runtime
+    """
+
+    # Calculate sum
+    sum = 0
+
+    # Loop through number of trial
+    for i in range(trial):
+        # Start timer
+        start_time = time.clock()
+
+        # Find FDs
+        FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
+
+        # Only print the first trial (i = 0)
+        if i == 0:
+            pprint(FDs)
+            print()
+
+        # Stop timer
+        stop_time = time.clock()
+
+        # Calculate runtime
+        runtime = stop_time - start_time
+
+        # Print runtime result
+        print('Runtime (%s): %s seconds' % (str(i + 1), str(runtime)))
+
+        # Calculate runtime and sum them
+        sum = sum + runtime
+
+    # Return average
+    return sum / trial
+
 if __name__ == '__main__':
     # Parse command line arguments:
     if (len(sys.argv) < 3):
         print('Wrong number of arguments. Correct example:')
-        print('python find_fds.py input_data_set.csv 3 0.91')
+        print('python find_fds.py rssi.csv 3 0.91')
     else:
         data_file_name = str(sys.argv[1])
         depth_limit = int(sys.argv[2])
         minimum_support = float(sys.argv[3])
 
+        # Accepts an optional 4th argument which is the number of trials to calculate FDs
+        trial = int(sys.argv[4]) if 4 < len(sys.argv) else 1
+
         # Main function which you need to implement. 
-        # It discover FDs in the input data with given minimum support and depth limit
-        FDs = find_approximate_functional_dependencies(data_file_name, depth_limit, minimum_support)
-        
-        # print you findings:
-        pprint(FDs)
+        # It discover list_keys_fds in the input data with given minimum support and depth limit
+
+        print('Program starting...')
+
+        # Calculate average runtime and print FDs
+        runtime = avg_runtime(data_file_name, depth_limit, minimum_support, trial)
+        print('\nAverage Runtime: %s seconds (Average of %s trials)' % (str(runtime), str(trial)))
